@@ -1,0 +1,13 @@
+/home/vitalyb/Desktop/test_directory_ddd/dir1/dir2/2019-02-12-104541.jpg
+/home/vitalyb/Desktop/test_directory_ddd/dir1/dir2/Selection_001.png
+/home/vitalyb/Desktop/test_directory_ddd/dir1/dir2/Selection_002.png
+/home/vitalyb/Desktop/test_directory_ddd/dir1/Selection_001.png
+/home/vitalyb/Desktop/test_directory_ddd/Selection_008.png
+/home/vitalyb/Desktop/test_directory_ddd/2019-02-12-104541.jpg
+/home/vitalyb/Desktop/test_directory_ddd/Selection_0044.PNG
+/home/vitalyb/Desktop/test_directory_ddd/Selection_003.png
+/home/vitalyb/Desktop/test_directory_ddd/Selection_007.png
+/home/vitalyb/Desktop/test_directory_ddd/Selection_004.png
+/home/vitalyb/Desktop/test_directory_ddd/Selection_001.png
+/home/vitalyb/Desktop/test_directory_ddd/Selection_009.png
+/home/vitalyb/Desktop/test_directory_ddd/Selection_006.png
