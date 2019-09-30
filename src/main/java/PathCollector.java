@@ -1,13 +1,10 @@
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.geom.Ellipse2D;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -17,22 +14,16 @@ public class PathCollector extends JFrame {
     private JLabel labelMessage;
     private JButton buttonSelectPath;
     private JButton buttonSubmit;
-    private JButton goToFile;
+    private JButton buttonBrowseFile;
     private static JCheckBox checkBoxPng;
     private static JCheckBox checkBoxTif;
     private static JCheckBox checkBoxJpg;
     private static String enteredParentDirectoryPath;
-    private static File folder;
-    private static JTextArea ta;
-    private static JTextPane textPane;
-    private static StyledDocument doc;
-    private static SimpleAttributeSet center;
-    private static JPanel panel;
-    private static final String os = System.getProperty("os.name").toLowerCase();
+    private static File scannedDirectory;
+    private static final String OS = System.getProperty("os.name").toLowerCase();
 
     File jarFile = new File(PathCollector.class.getProtectionDomain().getCodeSource().getLocation().getPath());
     private final String FILE_RESULT = jarFile.getParentFile().getPath() + detectPathOfResultsFile();
-
     private File fileResults = new File(FILE_RESULT);
     static ArrayList<String> extentions = new ArrayList<String>();
 
@@ -52,7 +43,6 @@ public class PathCollector extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         //Set display size
         setPreferredSize(new Dimension(450, 220));
-        //setPreferredSize(new Dimension(450, 220));
         pack();
         //Center the frame to middle of screen
         setLocationRelativeTo(null);
@@ -63,10 +53,9 @@ public class PathCollector extends JFrame {
 
     private void createView() {
         setLayout(new GridLayout(0,1));
-
-
-        panel = new JPanel();
+        JPanel panel = new JPanel();
         getContentPane().add(panel);
+
         JLabel labelCheckBox = new JLabel("Please select required images extentions");
         labelCheckBox.setHorizontalAlignment(JLabel.CENTER);
         labelCheckBox.setPreferredSize(new Dimension(450, 30));
@@ -115,17 +104,17 @@ public class PathCollector extends JFrame {
         labelMessage = new JLabel();
         panel.add(labelMessage);
 
-        goToFile = new JButton("<HTML>Action completed: You can find created file <FONT color=\"#000099\"><U>here</U></FONT></HTML>");
-        goToFile.setHorizontalAlignment(SwingConstants.LEFT);
-        goToFile.setBorderPainted(false);
-        goToFile.setOpaque(false);
-        goToFile.setBackground(Color.WHITE);
-        goToFile.addActionListener(new ActionListener() {
+        buttonBrowseFile = new JButton("<HTML>Action completed: You can find created file <FONT color=\"#000099\"><U>here</U></FONT></HTML>");
+        buttonBrowseFile.setHorizontalAlignment(SwingConstants.LEFT);
+        buttonBrowseFile.setBorderPainted(false);
+        buttonBrowseFile.setOpaque(false);
+        buttonBrowseFile.setBackground(Color.WHITE);
+        buttonBrowseFile.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    if(os.contains("win")) {
+                    if(OS.contains("win")) {
                         Runtime.getRuntime().exec("explorer.exe /select," + FILE_RESULT);
-                    } else if(os.contains("linux") || os.contains("fedora")){
+                    } else if(OS.contains("linux") || OS.contains("fedora")){
                         Runtime.getRuntime().exec("nautilus " + FILE_RESULT);
                     }
 
@@ -135,14 +124,14 @@ public class PathCollector extends JFrame {
             }
         });
 
-        goToFile.setVisible(false);
-        panel.add(goToFile);
+        buttonBrowseFile.setVisible(false);
+        panel.add(buttonBrowseFile);
 
     }
 
     public void listFiles(String path, ArrayList<String> arrayList) throws IOException {
-        folder = new File(path);
-        File[] files = folder.listFiles();
+        scannedDirectory = new File(path);
+        File[] files = scannedDirectory.listFiles();
         BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_RESULT, true));
 
         for (File file : files){
@@ -215,34 +204,36 @@ public class PathCollector extends JFrame {
             try {
 
                 enteredParentDirectoryPath = fieldParentFolder.getText();
-                folder = new File(enteredParentDirectoryPath);
-
-                if(HandlerClass.getResults(extentions).isEmpty()){
-                    goToFile.setVisible(false);
-                    labelMessage.setText("Please select at least one checkbox");
-                    return;
-                } else if(enteredParentDirectoryPath.isEmpty()){
-                    goToFile.setVisible(false);
-                    labelMessage.setText("Parent directory path cannot be empty!");
-                    return;
-                } else if(!folder.exists()){
-                    goToFile.setVisible(false);
-                    labelMessage.setText("Please check entered path");
-                    return;
-                } else {
-                    goToFile.setVisible(false);
-                    labelMessage.setText("");
-                }
+                scannedDirectory = new File(enteredParentDirectoryPath);
 
                 if(fileResults.exists()){
                     fileResults.delete();
                 }
+
+                if(HandlerClass.getResults(extentions).isEmpty()){
+                    buttonBrowseFile.setVisible(false);
+                    labelMessage.setText("Please select at least one checkbox");
+                    return;
+                } else if(enteredParentDirectoryPath.isEmpty()){
+                    buttonBrowseFile.setVisible(false);
+                    labelMessage.setText("Parent directory path cannot be empty!");
+                    return;
+                } else if(!scannedDirectory.exists()){
+                    buttonBrowseFile.setVisible(false);
+                    labelMessage.setText("Please check entered path");
+                    return;
+                } else {
+                    buttonBrowseFile.setVisible(false);
+                    labelMessage.setText("");
+                }
+
                 listFiles(enteredParentDirectoryPath, HandlerClass.getResults(extentions));
+
                 if(isFileEmpty()){
-                    goToFile.setVisible(false);
+                    buttonBrowseFile.setVisible(false);
                     labelMessage.setText("Action completed: Result's file doesn't contain any data");
                 } else {
-                    goToFile.setVisible(true);
+                    buttonBrowseFile.setVisible(true);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -252,9 +243,9 @@ public class PathCollector extends JFrame {
 
     public static String detectPathOfResultsFile(){
         String resultFile = "";
-        if(os.contains("win")) {
+        if(OS.contains("win")) {
             resultFile = "\\jungo_path_collector.txt";
-        }else if(os.contains("linux") || os.contains("fedora")){
+        }else if(OS.contains("linux") || OS.contains("fedora")){
             resultFile = "/jungo_path_collector.txt";
         }
         return resultFile;
