@@ -1,25 +1,34 @@
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 
 public class PathCollector extends JFrame {
 
     private JTextField fieldParentFolder;
     private JLabel labelMessage;
+    private JButton buttonSelectPath;
     private JButton buttonSubmit;
+    private JButton goToFile;
     private static JCheckBox checkBoxPng;
     private static JCheckBox checkBoxTif;
     private static JCheckBox checkBoxJpg;
     private static String enteredParentDirectoryPath;
     private static File folder;
+    private static JTextArea ta;
+    private static JTextPane textPane;
+    private static StyledDocument doc;
+    private static SimpleAttributeSet center;
+    private static JPanel panel;
+    private static final String os = System.getProperty("os.name").toLowerCase();
 
     File jarFile = new File(PathCollector.class.getProtectionDomain().getCodeSource().getLocation().getPath());
     private final String FILE_RESULT = jarFile.getParentFile().getPath() + detectPathOfResultsFile();
@@ -54,11 +63,11 @@ public class PathCollector extends JFrame {
 
     private void createView() {
         setLayout(new GridLayout(0,1));
-        JPanel panel = null;
+
 
         panel = new JPanel();
         getContentPane().add(panel);
-        JLabel labelCheckBox = new JLabel("Please Select Required Images Extensions");
+        JLabel labelCheckBox = new JLabel("Please select required images extentions");
         labelCheckBox.setHorizontalAlignment(JLabel.CENTER);
         labelCheckBox.setPreferredSize(new Dimension(450, 30));
         panel.add(labelCheckBox);
@@ -69,13 +78,12 @@ public class PathCollector extends JFrame {
         panel.add(checkBoxPng);
         panel.add(checkBoxJpg);
         panel.add(checkBoxTif);
-
         HandlerClass handler = new HandlerClass();
         checkBoxPng.addItemListener(handler);
         checkBoxJpg.addItemListener(handler);
         checkBoxTif.addItemListener(handler);
 
-        JLabel labelDirectory = new JLabel("Please Enter Your Parent Directory");
+        JLabel labelDirectory = new JLabel("Please enter your parent directory");
         labelDirectory.setHorizontalAlignment(JLabel.CENTER);
         labelDirectory.setPreferredSize(new Dimension(450, 30));
         panel.add(labelDirectory);
@@ -84,12 +92,49 @@ public class PathCollector extends JFrame {
         fieldParentFolder.setPreferredSize(new Dimension(300, 30));
         panel.add(fieldParentFolder);
 
+        buttonSelectPath = new JButton("...");
+        buttonSelectPath.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser selectDirectory = new JFileChooser();
+                selectDirectory.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                int ret = selectDirectory.showDialog(null, "Select Path");
+                if (ret == JFileChooser.APPROVE_OPTION) {
+                    enteredParentDirectoryPath = selectDirectory.getSelectedFile().getAbsolutePath();
+                    fieldParentFolder.setText(enteredParentDirectoryPath);
+                }
+            }
+        });
+        panel.add(buttonSelectPath);
+
         buttonSubmit = new JButton("Submit");
         buttonSubmit.addActionListener(new ListFilesActionLitener());
         panel.add(buttonSubmit);
 
         labelMessage = new JLabel();
         panel.add(labelMessage);
+
+        goToFile = new JButton("<HTML>Action completed: You can find created file <FONT color=\"#000099\"><U>here</U></FONT></HTML>");
+        goToFile.setHorizontalAlignment(SwingConstants.LEFT);
+        goToFile.setBorderPainted(false);
+        goToFile.setOpaque(false);
+        goToFile.setBackground(Color.WHITE);
+        goToFile.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if(os.contains("win")) {
+                        Runtime.getRuntime().exec("explorer.exe /select," + FILE_RESULT);
+                    } else if(os.contains("linux") || os.contains("fedora")){
+                        Runtime.getRuntime().exec("nautilus" + FILE_RESULT);
+                    }
+
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        goToFile.setVisible(false);
+        panel.add(goToFile);
 
     }
 
@@ -171,21 +216,32 @@ public class PathCollector extends JFrame {
                 folder = new File(enteredParentDirectoryPath);
 
                 if(HandlerClass.getResults(extentions).isEmpty()){
-                    labelMessage.setText("Please Select At Least One Checkbox");
+                    goToFile.setVisible(false);
+                    labelMessage.setText("Please select at least one checkbox");
                     return;
                 } else if(enteredParentDirectoryPath.isEmpty()){
-                    labelMessage.setText("Parent Directory Path Canoot Be Empty!");
+                    goToFile.setVisible(false);
+                    labelMessage.setText("Parent directory path cannot be empty!");
                     return;
                 } else if(!folder.exists()){
-                    labelMessage.setText("Please Check Entered Path");
+                    goToFile.setVisible(false);
+                    labelMessage.setText("Please check entered path");
                     return;
-                } else {labelMessage.setText("");}
+                } else {
+                    goToFile.setVisible(false);
+                    labelMessage.setText("");
+                }
 
                 if(fileResults.exists()){
                     fileResults.delete();
                 }
                 listFiles(enteredParentDirectoryPath, HandlerClass.getResults(extentions));
-                labelMessage.setText("Action completed");
+                if(isFileEmpty()){
+                    goToFile.setVisible(false);
+                    labelMessage.setText("Action completed: Result's file doesn't contain any data");
+                } else {
+                    goToFile.setVisible(true);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -193,14 +249,30 @@ public class PathCollector extends JFrame {
     }
 
     public static String detectPathOfResultsFile(){
-        String os = System.getProperty("os.name").toLowerCase();
         String resultFile = "";
-
         if(os.contains("win")) {
             resultFile = "\\jungo_path_collector.txt";
         }else if(os.contains("linux") || os.contains("fedora")){
             resultFile = "/jungo_path_collector.txt";
         }
         return resultFile;
+    }
+
+    public boolean isFileEmpty(){
+        boolean flag = false;
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(FILE_RESULT));
+            String currentReadingLine = reader.readLine();
+            if(currentReadingLine == null){
+                flag = true;
+            }
+            reader.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return flag;
     }
 }
