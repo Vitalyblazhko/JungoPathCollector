@@ -93,6 +93,7 @@ public class PathCollector extends JFrame {
         panel.add(fieldParentFolder);
 
         buttonSelectPath = new JButton("...");
+        buttonSelectPath.setPreferredSize(new Dimension(30, 25));
         buttonSelectPath.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser selectDirectory = new JFileChooser();
@@ -107,6 +108,7 @@ public class PathCollector extends JFrame {
         panel.add(buttonSelectPath);
 
         buttonSubmit = new JButton("Submit");
+        buttonSubmit.setPreferredSize(new Dimension(85, 25));
         buttonSubmit.addActionListener(new ListFilesActionLitener());
         panel.add(buttonSubmit);
 
@@ -124,7 +126,7 @@ public class PathCollector extends JFrame {
                     if(os.contains("win")) {
                         Runtime.getRuntime().exec("explorer.exe /select," + FILE_RESULT);
                     } else if(os.contains("linux") || os.contains("fedora")){
-                        Runtime.getRuntime().exec("nautilus" + FILE_RESULT);
+                        Runtime.getRuntime().exec("nautilus " + FILE_RESULT);
                     }
 
                 } catch (IOException ex) {
