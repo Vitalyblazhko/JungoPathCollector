@@ -1,14 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.geom.Ellipse2D;
+import java.awt.event.*;
 import java.io.*;
 import java.util.ArrayList;
-
-import static java.awt.Component.LEFT_ALIGNMENT;
 
 public class PathCollector extends JFrame {
 
@@ -18,25 +12,15 @@ public class PathCollector extends JFrame {
     private JButton buttonSelectPath;
     private JButton buttonSubmit;
     private JButton buttonBrowseFile;
+    private JButton buttonSelectFileName;
     private static JCheckBox checkBoxPng;
     private static JCheckBox checkBoxTif;
     private static JCheckBox checkBoxJpg;
     private static String enteredParentDirectoryPath;
+    private static String enteredFileName;
     private static File scannedDirectory;
     private static final String OS = System.getProperty("os.name").toLowerCase();
-
-    //File jarFile = new File(PathCollector.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-    //private final String FILE_RESULT = jarFile.getParentFile().getPath() + detectPathOfResultsFile();
-    //private File fileResults = new File(FILE_RESULT);
-    //private File fileResults = new File(getFileResult());
     static ArrayList<String> extentions = new ArrayList<String>();
-
-    public static File getFileResult(){
-        File jarFile = new File(PathCollector.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-        String fileNameResult = jarFile.getParentFile().getPath() + detectPathOfResultsFile();
-        File fileResults = new File(fileNameResult);
-        return fileResults;
-    }
 
     public static void main(String[] args) throws IOException {
         SwingUtilities.invokeLater(new Runnable() {
@@ -50,6 +34,8 @@ public class PathCollector extends JFrame {
     public PathCollector(){
         createView();
         setTitle("Jungo's Path Collector");
+        //Set icon in Main window
+        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("icon.png")));
         //Make window exit application on close
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         //Set display size
@@ -59,7 +45,6 @@ public class PathCollector extends JFrame {
         setLocationRelativeTo(null);
         //Disable resize
         setResizable(false);
-
     }
 
     private void createView() {
@@ -80,7 +65,6 @@ public class PathCollector extends JFrame {
         fileCreatedNamePanel.setPreferredSize(new Dimension(450, 40));
         JPanel labelMessagePanel = new JPanel(new FlowLayout());
         labelMessagePanel.setPreferredSize(new Dimension(450, 30));
-
 
         getContentPane().add(mainPanel);
 
@@ -130,11 +114,12 @@ public class PathCollector extends JFrame {
                 }
             }
         });
+        setCursorStyle(buttonSelectPath);
         buttonSelectPath.setPreferredSize(new Dimension(40, 29));
         pathPanel.add(buttonSelectPath);
 
 
-        JLabel labelFileName = new JLabel("Enter name of result's file");
+        JLabel labelFileName = new JLabel("Enter name of result's file or select file");
         labelFileName.setHorizontalAlignment(JLabel.CENTER);
         fileCreatedNameLabel.add(labelFileName);
 
@@ -143,9 +128,26 @@ public class PathCollector extends JFrame {
         fileCreatedNameField.setPreferredSize(new Dimension(200, 30));
         fileCreatedNamePanel.add(fileCreatedNameField);
 
+        buttonSelectFileName = new JButton("...");
+        buttonSelectFileName.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser selectDirectory = new JFileChooser();
+                selectDirectory.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                int ret = selectDirectory.showDialog(null, "Open");
+                if (ret == JFileChooser.APPROVE_OPTION) {
+                    enteredFileName = selectDirectory.getSelectedFile().getAbsolutePath();
+                    fileCreatedNameField.setText(enteredFileName);
+                }
+            }
+        });
+        setCursorStyle(buttonSelectFileName);
+        buttonSelectFileName.setPreferredSize(new Dimension(40, 29));
+        fileCreatedNamePanel.add(buttonSelectFileName);
+
 
         buttonSubmit = new JButton("Submit");
         buttonSubmit.addActionListener(new ListFilesActionLitener());
+        setCursorStyle(buttonSubmit);
         buttonSubmit.setPreferredSize(new Dimension(80, 29));
         fileCreatedNamePanel.add(buttonSubmit);
 
@@ -172,6 +174,7 @@ public class PathCollector extends JFrame {
                 }
             }
         });
+        setCursorStyle(buttonBrowseFile);
         buttonBrowseFile.setVisible(false);
         labelMessagePanel.add(buttonBrowseFile);
     }
@@ -193,6 +196,19 @@ public class PathCollector extends JFrame {
             }
         }
         writer.close();
+    }
+
+    public void setCursorStyle(JButton jbutton){
+        Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
+        Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
+        jbutton.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent me) {
+                setCursor(handCursor);
+            }
+            public void mouseExited(MouseEvent me) {
+                setCursor(defaultCursor);
+            }
+        });
     }
 
     public static class HandlerClass implements ItemListener {
@@ -253,10 +269,6 @@ public class PathCollector extends JFrame {
                 enteredParentDirectoryPath = fieldParentFolder.getText();
                 scannedDirectory = new File(enteredParentDirectoryPath);
 
-                if(getFileResult().exists()){
-                    getFileResult().delete();
-                }
-
                 if(HandlerClass.getResults(extentions).isEmpty()){
                     buttonBrowseFile.setVisible(false);
                     labelMessage.setText("Please select at least one checkbox");
@@ -274,6 +286,10 @@ public class PathCollector extends JFrame {
                     labelMessage.setText("");
                 }
 
+                if(getFileResult().exists()){
+                    getFileResult().delete();
+                }
+
                 listFiles(enteredParentDirectoryPath, HandlerClass.getResults(extentions));
 
                 if(isFileEmpty()){
@@ -288,12 +304,29 @@ public class PathCollector extends JFrame {
         }
     }
 
-    public static String detectPathOfResultsFile(){
-        String resultsFileName = fileCreatedNameField.getText();
-        if(!resultsFileName.endsWith(".txt")){
-            resultsFileName = resultsFileName + ".txt";
+    public static File getFileResult(){
+        String resultsFileName = getNameOfResultsFile();
+        String pathResultResults = "";
+        if(resultsFileName.isEmpty()){
+            pathResultResults = fileCreatedNameField.getText();
+        } else {
+            File jarFile = new File(PathCollector.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+            pathResultResults = jarFile.getParentFile().getPath() + resultsFileName;
         }
+        if(!pathResultResults.endsWith(".txt")){
+            pathResultResults = pathResultResults + ".txt";
+        }
+        File fileResults = new File(pathResultResults);
+        return fileResults;
+    }
+
+    public static String getNameOfResultsFile(){
+        String resultsFileName = fileCreatedNameField.getText();
         String resultFile = "";
+        if(resultsFileName.contains("/") || resultsFileName.contains("\\")){
+            return resultFile;
+        }
+
         if(OS.contains("win")) {
             resultFile = "\\" + resultsFileName;
         }else if(OS.contains("linux") || OS.contains("fedora")){
