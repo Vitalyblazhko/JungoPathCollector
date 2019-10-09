@@ -1,0 +1,5 @@
+C:\Users\Vital\Documents\GitHub\BlazhkoQA17_class\SecondSeleniumProject\screenshot-1558775123690.png
+C:\Users\Vital\Documents\GitHub\BlazhkoQA17_class\SecondSeleniumProject\screenshot-1558775145896.png
+C:\Users\Vital\Documents\GitHub\JungoPathCollector\build\resources\main\icon.png
+C:\Users\Vital\Documents\GitHub\JungoPathCollector\out\production\resources\icon.png
+C:\Users\Vital\Documents\GitHub\JungoPathCollector\src\main\resources\icon.png

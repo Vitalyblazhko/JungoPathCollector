@@ -21,6 +21,7 @@ public class PathCollector extends JFrame {
     private static File scannedDirectory;
     private static final String OS = System.getProperty("os.name").toLowerCase();
     static ArrayList<String> extentions = new ArrayList<String>();
+    static JFileChooser selectDirectory = new JFileChooser();
 
     public static void main(String[] args) throws IOException {
         SwingUtilities.invokeLater(new Runnable() {
@@ -105,7 +106,6 @@ public class PathCollector extends JFrame {
         buttonSelectPath = new JButton("...");
         buttonSelectPath.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                JFileChooser selectDirectory = new JFileChooser();
                 selectDirectory.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 int ret = selectDirectory.showDialog(null, "Select Path");
                 if (ret == JFileChooser.APPROVE_OPTION) {
@@ -131,7 +131,6 @@ public class PathCollector extends JFrame {
         buttonSelectFileName = new JButton("...");
         buttonSelectFileName.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                JFileChooser selectDirectory = new JFileChooser();
                 selectDirectory.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 int ret = selectDirectory.showDialog(null, "Open");
                 if (ret == JFileChooser.APPROVE_OPTION) {
@@ -183,10 +182,10 @@ public class PathCollector extends JFrame {
         scannedDirectory = new File(path);
         File[] files = scannedDirectory.listFiles();
         BufferedWriter writer = new BufferedWriter(new FileWriter(getFileResult().toString(), true));
-
+        int arraySize = arrayList.size();
         for (File file : files){
             if(file.isFile()) {
-                for(int i=0; i<arrayList.size(); i++){
+                for(int i=0; i<arraySize; i++){
                     if(file.toString().toLowerCase().endsWith(arrayList.get(i))){
                         writer.write(file.getPath()+"\n");
                     }
@@ -265,7 +264,6 @@ public class PathCollector extends JFrame {
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
             try {
-
                 enteredParentDirectoryPath = fieldParentFolder.getText();
                 scannedDirectory = new File(enteredParentDirectoryPath);
 
